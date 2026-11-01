@@ -1,3 +1,49 @@
+# grblHAL for MKS DLC32 V2.2 with TS24-R
+
+This repository adds an experimental LVGL touchscreen interface for the MKS DLC32 V2.2 controller and MKS TS24-R V2.1 display. It is based on the grblHAL ESP32 driver and is configured for the standard MKS DLC32 V2.0 board map.
+
+The UI provides live machine/work position readouts, jogging, homing, work zeroing, an SD-card file browser, job controls, and CNC/Laser mode selection. The TS24 display and touch panel have been brought up on the controller; machine motion and job execution have not been verified on a connected CNC machine.
+
+## Screenshots
+
+### Home
+
+![TS24 home screen](docs/screenshots/Home.png)
+
+### Control and jog
+
+![TS24 control and jog screen](docs/screenshots/Control.png)
+
+### SD card file browser
+
+![TS24 file browser](docs/screenshots/File.png)
+
+### grblHAL setup
+
+![TS24 setup screen](docs/screenshots/Setup.png)
+
+## Build and flash
+
+Build with ESP-IDF v4.3 in the configured ESP-IDF environment:
+
+```text
+idf.py -D MKS_TS24_UI=ON -D MKS_TS24_UI_SAFE_BRINGUP=OFF build
+```
+
+The build creates `build/grbl.bin`. The flash size must be set to 8 MB for the DLC32. To flash the full image set with ESP-IDF, use `idf.py -p COMx flash`; the tool writes the bootloader at `0x1000`, partition table at `0x8000`, and application at `0x10000`.
+
+The release ZIP provided with this project contains the application image renamed to `firmware.bin`; flash it at `0x10000` when using a tool that accepts an image and address. It does not contain the bootloader or partition table.
+
+`MKS_TS24_UI_SAFE_BRINGUP` is intentionally OFF for the regular build. The TS24 uses pins that overlap some DLC32 auxiliary functions; review the board map and TS24 notes in [`main/ts24_ui/README.md`](main/ts24_ui/README.md) before connecting a machine. Axis steps/mm, travel, homing, and limits are configured through grblHAL.
+
+The local changes required in the `main/grbl` submodule are recorded in [`patches/grblhal-core-ts24.patch`](patches/grblhal-core-ts24.patch). After initializing submodules, apply it from the project root with:
+
+```text
+git -C main/grbl apply ../..\patches\grblhal-core-ts24.patch
+```
+
+---
+
 ## ESP32 grblHAL driver
 
 __Important:__  

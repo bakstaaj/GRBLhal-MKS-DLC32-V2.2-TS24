@@ -75,6 +75,37 @@
 #error "Board BOARD_MKS_DLC32_V2P0 does not have support for ABC Motors"
 #endif
 
+#define AUXOUTPUT3_PIN          GPIO_NUM_32 // LC
+
+#ifdef MKS_TS24_UI
+// EXP1 pins below are owned by the TS24-R display while this option is enabled.
+// GPIO32 is the board's spindle PWM pin. The display owns the spindle
+// enable/direction GPIOs, so those signals are represented as software-only.
+#if COOLANT_ENABLE & COOLANT_FLOOD
+#error "TS24 UI uses GPIO5 for display backlight; flood coolant is unavailable."
+#endif
+#if COOLANT_ENABLE & COOLANT_MIST
+#error "TS24 UI uses I2SO(7) for the display beeper; mist coolant is unavailable."
+#endif
+#if MPG_ENABLE == 1
+#error "TS24 UI uses GPIO33 for LCD data/command; MPG mode input is unavailable."
+#endif
+#if DRIVER_SPINDLE1_ENABLE
+#error "TS24 UI uses GPIO25/GPIO26 for LCD/touch chip-select; spindle 1 is unavailable."
+#endif
+#if PWM_SERVO_ENABLE
+#error "TS24 UI uses GPIO25/GPIO26 for LCD/touch chip-select; PWM servo is unavailable."
+#endif
+#if DRIVER_SPINDLE_ENABLE & SPINDLE_PWM
+#define SPINDLE_PWM_PIN         AUXOUTPUT3_PIN
+#endif
+#if DRIVER_SPINDLE_ENABLE & SPINDLE_ENA
+#define SPINDLE_ENABLE_PIN      SPINDLE_ENABLE_DUMMY_PIN
+#endif
+#if DRIVER_SPINDLE_ENABLE & SPINDLE_DIR
+#define SPINDLE_DIRECTION_PIN   SPINDLE_DIRECTION_DUMMY_PIN
+#endif
+#else
 #define AUXOUTPUT0_PIN          GPIO_NUM_25 // EXP_1,7 (LCD_CS_0)
 #if PWM_SERVO_ENABLE || (SPINDLE_ENABLE & ((1<<SPINDLE_PWM2)|(1<<SPINDLE_PWM2_NODIR)))
 #define AUXOUTPUT0_PWM_PIN      GPIO_NUM_26 // EXP_1,5 (LCD_TOUCH_CS_0)
@@ -82,8 +113,7 @@
 #define AUXOUTPUT1_PIN          GPIO_NUM_26 // EXP_1,5 (LCD_TOUCH_CS_0)
 #endif
 #define AUXOUTPUT2_PIN          GPIO_NUM_27 // EXP_1,4 (LCD_RST_0)
-#define AUXOUTPUT3_PIN          GPIO_NUM_32 // LC
-#define AUXOUTPUT4_PIN          GPIO_NUM_5  //  EXP_1,3 (LCD_EN_0)
+#define AUXOUTPUT4_PIN          GPIO_NUM_5  // EXP_1,3 (LCD_EN_0)
 
 // Define driver spindle pins
 #if DRIVER_SPINDLE_ENABLE & (SPINDLE_ENA|SPINDLE_PWM)
@@ -106,15 +136,19 @@
 #define SPINDLE1_ENABLE_PIN      AUXOUTPUT1_PIN
 #endif
 
+#endif // MKS_TS24_UI
+
 // Define flood and mist coolant enable output pins.
-#if COOLANT_ENABLE & COOLANT_FLOOD
+#if !defined(MKS_TS24_UI) && (COOLANT_ENABLE & COOLANT_FLOOD)
 #define COOLANT_FLOOD_PIN   AUXOUTPUT4_PIN
 #endif
-#if COOLANT_ENABLE & COOLANT_MIST
+#if !defined(MKS_TS24_UI) && (COOLANT_ENABLE & COOLANT_MIST)
 #define COOLANT_MIST_PIN    I2SO(7)     // Beeper
 #endif
 
+#ifndef MKS_TS24_UI
 #define AUXINPUT0_PIN       GPIO_NUM_33 // EXP_1,8 (LCD_RS)
+#endif
 #define AUXINPUT1_PIN       GPIO_NUM_22
 #if !I2C_ENABLE
 #define AUXINPUT2_PIN       GPIO_NUM_4 // Cycle start  // J2,4 (I2C_SCL)

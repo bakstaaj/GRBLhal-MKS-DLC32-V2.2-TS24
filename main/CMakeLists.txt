@@ -10,6 +10,8 @@ OPTION(Ethernet "Compile with Ethernet support" OFF)
 
 # Add my_plugin.c to compilation, add my_plugin.c to the main folder first
 OPTION(AddMyPlugin "Add my_plugin.c" OFF)
+OPTION(MKS_TS24_UI "Enable the experimental MKS TS24-R touchscreen UI" OFF)
+OPTION(MKS_TS24_UI_SAFE_BRINGUP "Disable spindle/coolant/MPG outputs that conflict with the TS24 during initial display bring-up" OFF)
 
 # --- Do not change anything below unless you understand what you are doing ---
 
@@ -82,7 +84,11 @@ set(SRCS
  sdcard/fs_littlefs.c
 )
 
-if(AddMyPlugin OR EXISTS ${CMAKE_CURRENT_LIST_DIR}/my_plugin.c)
+if(MKS_TS24_UI)
+set(MY_PLUGIN_SOURCE
+ ts24_ui/my_plugin.c
+)
+elseif(AddMyPlugin OR EXISTS ${CMAKE_CURRENT_LIST_DIR}/my_plugin.c)
 set(MY_PLUGIN_SOURCE
  my_plugin.c
 )
@@ -278,10 +284,29 @@ list (APPEND SRCS ${MISC_PLUGINS_SOURCE})
 list (APPEND SRCS ${EMBROIDERY_SOURCE})
 list (APPEND SRCS ${OPENPNP_SOURCE})
 
+if(MKS_TS24_UI)
+file(GLOB_RECURSE TS24_LVGL_SOURCES CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_LIST_DIR}/ts24_ui/lvgl/src/*.c")
+list (APPEND SRCS ${TS24_LVGL_SOURCES} ts24_ui/ts24_ui.c)
+endif()
+
 list (APPEND SRCS ${ETHERNET_SOURCE})
 list (APPEND SRCS ${WIFI_SOURCE})
 
 idf_component_register(SRCS "${SRCS}" INCLUDE_DIRS ".")
+
+if(MKS_TS24_UI)
+target_include_directories("${COMPONENT_LIB}" PUBLIC
+    "ts24_ui"
+    "ts24_ui/lvgl"
+    "ts24_ui/lvgl/src")
+target_compile_definitions("${COMPONENT_LIB}" PUBLIC
+    MKS_TS24_UI=1
+    LV_CONF_INCLUDE_SIMPLE=1)
+if(MKS_TS24_UI_SAFE_BRINGUP)
+target_compile_definitions("${COMPONENT_LIB}" PUBLIC MKS_TS24_UI_SAFE_BRINGUP=1)
+endif()
+endif()
 
 target_compile_definitions("${COMPONENT_LIB}" PUBLIC GRBL_ESP32)
 target_compile_definitions("${COMPONENT_LIB}" PUBLIC LITTLEFS_ENABLE=1)

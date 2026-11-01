@@ -1,0 +1,60 @@
+diff --git a/protocol.c b/protocol.c
+index cdce653..7486f49 100644
+--- a/protocol.c
++++ b/protocol.c
+@@ -333,8 +333,12 @@ bool protocol_main_loop (void)
+         // Handle extra command (internal stream)
+         if(*xcommand) {
+ 
+-            if(*xcommand == '$') // grblHAL '$' system command
+-                system_execute_line(xcommand, hal.stream.write);
++            if(*xcommand == '$') { // grblHAL '$' system command
++                // Internal commands (including TS24 touch actions) must report
++                // failures just like commands received from the serial stream.
++                gc_state.last_error = system_execute_line(xcommand, hal.stream.write);
++                grbl.report.status_message(gc_state.last_error);
++            }
+             else if(state_get() & (STATE_ALARM|STATE_ESTOP|STATE_JOG)) // Everything else is gcode. Block if in alarm, eStop or jog state.
+                 grbl.report.status_message(Status_SystemGClock);
+             else // Parse and execute g-code block.
+diff --git a/settings.c b/settings.c
+index b442d51..8d0667e 100644
+--- a/settings.c
++++ b/settings.c
+@@ -1120,6 +1120,18 @@ static status_code_t set_suboptions (setting_id_t id, uint_fast16_t int_value)
+ 
+ #if !LATHE_UVW_OPTION
+ 
++// The TS24 safe bring-up profile intentionally builds without spindle outputs.
++// Allow the UI to persist the software motion mode anyway; this does not add or
++// enable a physical laser/PWM output in that profile.
++static bool laser_mode_available (void)
++{
++#if defined(MKS_TS24_UI) && defined(MKS_TS24_UI_SAFE_BRINGUP)
++    return true;
++#else
++    return spindle_get_caps(false).laser;
++#endif
++}
++
+ static status_code_t set_mode (setting_id_t id, uint_fast16_t int_value)
+ {
+     switch((machine_mode_t)int_value) {
+@@ -1129,7 +1141,7 @@ static status_code_t set_mode (setting_id_t id, uint_fast16_t int_value)
+            break;
+ 
+         case Mode_Laser:
+-            if(!spindle_get_caps(false).laser)
++            if(!laser_mode_available())
+                 return Status_SettingDisabledLaser;
+             gc_state.modal.diameter_mode = false;
+             break;
+@@ -2270,7 +2282,7 @@ FLASHMEM static void sanity_check (void)
+ #if LATHE_UVW_OPTION
+     settings.mode = Mode_Lathe;
+ #else
+-    if(settings.mode == Mode_Laser && !spindle_get_caps(false).laser)
++    if(settings.mode == Mode_Laser && !laser_mode_available())
+         settings.mode = Mode_Standard;
+ #endif
+ 

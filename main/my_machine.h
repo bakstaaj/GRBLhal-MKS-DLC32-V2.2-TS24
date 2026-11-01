@@ -34,7 +34,7 @@
 //#define BOARD_FYSETC_E4               			//
 //#define BOARD_JACKPOT                 			// Uses TMC2209 drivers, untested!
 //#define BOARD_MKS_DLC32_MAX_V1        			// Has a ESP32-S3 MCU
-//#define BOARD_MKS_DLC32_V2P0          			//
+#define BOARD_MKS_DLC32_V2P0          			// Target board: MKS DLC32 V2.2 / 2.x
 //#define BOARD_MKS_TINYBEE_V1          			//
 //#define BOARD_OOZNEST_CNC                         // Has a ESP32-S3 MCU
 //#define BOARD_PIBOT_I2S_6_AXIS        			// PiBot 6-axis I2S board
@@ -63,6 +63,22 @@
 // If none are specified the default PWM spindle is instantiated.
 // Spindle definitions can be found in grbl/spindle_control.h.
 // More here https://github.com/grblHAL/Plugins_spindle
+#if defined(MKS_TS24_UI_SAFE_BRINGUP)
+// Temporary UI and jog bring-up profile. EXP1 display pins overlap spindle,
+// coolant, and MPG signals; this profile deliberately disables those features.
+#define SPINDLE0_ENABLE         0
+#define SPINDLE1_ENABLE         0
+#define SPINDLE2_ENABLE         0
+#define SPINDLE3_ENABLE         0
+#define COOLANT_ENABLE          0
+#define MPG_ENABLE              0
+#elif defined(MKS_TS24_UI)
+// TS24 uses the spindle enable/direction GPIOs for the display. Keep the
+// board's PWM spindle registered so grblHAL can store and report $32 modes;
+// the board map routes enable/direction to dummy signals and PWM to GPIO32.
+#define SPINDLE0_ENABLE         SPINDLE_PWM0
+#define COOLANT_ENABLE          0 // TS24 backlight and beeper occupy coolant pins.
+#endif
 //#define SPINDLE0_ENABLE         SPINDLE_HUANYANG1
 //#define SPINDLE1_ENABLE         SPINDLE_PWM0_NODIR
 //#define SPINDLE2_ENABLE         SPINDLE_NONE
@@ -76,7 +92,7 @@
 //#define WIFI_SOFTAP             1 // Use Soft AP mode for WiFi.
 //#define ETHERNET_ENABLE         1 // Ethernet streaming. Uses networking plugin.
 //#define BLUETOOTH_ENABLE        1 // Set to 1 for native radio, 2 for HC-05 module.
-//#define SDCARD_ENABLE           1 // Run gcode programs from SD card. Set to 2 to enable YModem upload.
+#define SDCARD_ENABLE           1 // TS24 file browser and local G-code jobs use the DLC32 SD slot.
 //#define LITTLEFS_ENABLE         1 // Enable flash based storage, automatically enabled if WebUI is enabled. Set to 2 to mount as root.
 //#define MPG_ENABLE              1 // Enable MPG interface. Requires a serial stream and means to switch between normal and MPG mode.
                                     // 1: Mode switching is by handshake pin.
