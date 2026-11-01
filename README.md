@@ -4,6 +4,10 @@ This repository adds an experimental LVGL touchscreen interface for the MKS DLC3
 
 The UI provides live machine/work position readouts, jogging, homing, work zeroing, an SD-card file browser, job controls, and CNC/Laser mode selection. The TS24 display and touch panel have been brought up on the controller; machine motion and job execution have not been verified on a connected CNC machine.
 
+## Firmware download
+
+Download the packaged firmware from the [GitHub Releases page](https://github.com/bakstaaj/GRBLhal-MKS-DLC32-V2.2-TS24/releases/latest). The ZIP contains `firmware.bin`; flash it at `0x10000`.
+
 ## Screenshots
 
 ### Home
