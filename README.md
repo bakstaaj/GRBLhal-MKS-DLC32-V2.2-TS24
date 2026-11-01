@@ -32,7 +32,7 @@ idf.py -D MKS_TS24_UI=ON -D MKS_TS24_UI_SAFE_BRINGUP=OFF build
 
 The build creates `build/grbl.bin`. The flash size must be set to 8 MB for the DLC32. To flash the full image set with ESP-IDF, use `idf.py -p COMx flash`; the tool writes the bootloader at `0x1000`, partition table at `0x8000`, and application at `0x10000`.
 
-The release ZIP provided with this project contains the application image renamed to `firmware.bin`; flash it at `0x10000` when using a tool that accepts an image and address. It does not contain the bootloader or partition table.
+For application-only flashing, the packaged `firmware.bin` is the application image from `build/grbl.bin`; flash it at `0x10000` when using a tool that accepts an image and address. It does not contain the bootloader or partition table.
 
 `MKS_TS24_UI_SAFE_BRINGUP` is intentionally OFF for the regular build. The TS24 uses pins that overlap some DLC32 auxiliary functions; review the board map and TS24 notes in [`main/ts24_ui/README.md`](main/ts24_ui/README.md) before connecting a machine. Axis steps/mm, travel, homing, and limits are configured through grblHAL.
 
